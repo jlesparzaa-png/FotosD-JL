@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuestra Boda en la Playa</title>
+<style>
+  :root {
+    --sand: #f6ecd9;
+    --sea: #5fb3c4;
+    --deep: #2b6f83;
+    --text: #3b4a4f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--text);
+    background: linear-gradient(180deg, #cfeaf0 0%, #eaf6f8 35%, var(--sand) 36%, #efdfc0 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .waves { width: 100%; height: 70px; display: block; margin-top: -1px; }
+  main {
+    width: 100%;
+    max-width: 440px;
+    padding: 24px 20px 40px;
+    text-align: center;
+  }
+  .names { font-size: 2.2rem; margin: 10px 0 4px; color: var(--deep); font-weight: normal; letter-spacing: 1px; }
+  .date { font-size: 0.95rem; letter-spacing: 3px; text-transform: uppercase; opacity: .75; }
+  p.msg { line-height: 1.5; margin: 22px 0; }
+  .card {
+    background: rgba(255,255,255,.75);
+    border-radius: 18px;
+    padding: 22px 18px;
+    box-shadow: 0 6px 20px rgba(43,111,131,.15);
+  }
+  input[type=file] { display: none; }
+  .btn {
+    display: inline-block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 1.05rem;
+    cursor: pointer;
+    color: #fff;
+    background: var(--sea);
+  }
+  .btn.primary { background: var(--deep); margin-top: 12px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  #list { list-style: none; padding: 0; margin: 14px 0 0; font-size: .85rem; text-align: left; }
+  #list li { padding: 5px 0; border-bottom: 1px dashed #d8c9a8; display: flex; justify-content: space-between; gap: 8px; }
+  #list .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #list .ok { color: #2e8b57; } #list .err { color: #b03a2e; }
+  .bar { height: 12px; background: #e3eef0; border-radius: 999px; overflow: hidden; margin-top: 16px; display: none; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--sea), var(--deep)); transition: width .15s; }
+  #status { margin-top: 10px; font-size: .9rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<svg class="waves" viewBox="0 0 1200 70" preserveAspectRatio="none">
+  <path d="M0,35 C150,70 350,0 600,35 C850,70 1050,0 1200,35 L1200,70 L0,70 Z" fill="#f6ecd9"/>
+  <path d="M0,20 C200,55 400,-5 600,20 C800,45 1000,-5 1200,20 L1200,0 L0,0 Z" fill="#bfe3ea" opacity=".7"/>
+</svg>
+
+<main>
+  <div class="date">Recuerdos de nuestra boda</div>
+  <h1 class="names">Nombre &amp; Nombre</h1>
+  <p class="msg">Gracias por acompañarnos. Comparte aquí tus fotos y videos cortos del día para que podamos revivirlo.</p>
+
+  <div class="card">
+    <input type="file" id="files" accept="image/*,video/*" multiple>
+    <button class="btn" id="pick">Seleccionar fotos o videos</button>
+    <ul id="list"></ul>
+    <button class="btn primary" id="send" disabled>Subir</button>
+    <div class="bar" id="bar"><div id="fill"></div></div>
+    <div id="status"></div>
+  </div>
+</main>
+
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby5_Pk6RNLgZciQW7ggBnRIr_vSRS36NIt3VQBoz3sBZU69OzZxwZamOooaJtUvNznM/exec';
+const MAX_MB = 20;
+
+const input = document.getElementById('files');
+const list = document.getElementById('list');
+const sendBtn = document.getElementById('send');
+const bar = document.getElementById('bar');
+const fill = document.getElementById('fill');
+const statusEl = document.getElementById('status');
+let queue = [];
+
+document.getElementById('pick').onclick = () => input.click();
+
+input.onchange = () => {
+  queue = Array.from(input.files);
+  list.innerHTML = '';
+  queue.forEach((f, i) => {
+    const li = document.createElement('li');
+    const tooBig = f.size > MAX_MB * 1024 * 1024;
+    li.innerHTML = `<span class="name">${f.name}</span><span id="s${i}" class="${tooBig ? 'err' : ''}">${tooBig ? 'Excede ' + MAX_MB + ' MB' : (f.size / 1048576).toFixed(1) + ' MB'}</span>`;
+    list.appendChild(li);
+  });
+  queue = queue.filter(f => f.size <= MAX_MB * 1024 * 1024);
+  sendBtn.disabled = queue.length === 0;
+  statusEl.textContent = '';
+};
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function upload(file, onProgress) {
+  return toBase64(file).then(b64 => new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', WEB_APP_URL);
+    // text/plain evita el preflight CORS que Apps Script no soporta
+    xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    xhr.onload = () => {
+      try {
+        const r = JSON.parse(xhr.responseText);
+        r.status === 'success' ? resolve(r) : reject(new Error(r.message));
+      } catch (e) { reject(new Error('Respuesta inválida')); }
+    };
+    xhr.onerror = () => reject(new Error('Error de red'));
+    xhr.send(JSON.stringify({
+      fileName: Date.now() + '_' + file.name,
+      mimeType: file.type || 'application/octet-stream',
+      file: b64
+    }));
+  }));
+}
+
+sendBtn.onclick = async () => {
+  sendBtn.disabled = true;
+  document.getElementById('pick').disabled = true;
+  bar.style.display = 'block';
+  fill.style.width = '0%';
+  let done = 0, fails = 0;
+
+  for (let i = 0; i < queue.length; i++) {
+    const idx = Array.from(input.files).indexOf(queue[i]);
+    const tag = document.getElementById('s' + idx);
+    statusEl.textContent = `Subiendo ${i + 1} de ${queue.length}...`;
+    try {
+      await upload(queue[i], p => {
+        fill.style.width = ((i + p) / queue.length * 100).toFixed(1) + '%';
+      });
+      tag.textContent = 'Listo'; tag.className = 'ok';
+      done++;
+    } catch (e) {
+      tag.textContent = 'Error'; tag.className = 'err';
+      fails++;
+    }
+    fill.style.width = ((i + 1) / queue.length * 100) + '%';
+  }
+
+  statusEl.textContent = fails
+    ? `Se subieron ${done}; fallaron ${fails}. Intenta de nuevo con esos.`
+    : 'Gracias, tus recuerdos se subieron correctamente.';
+  document.getElementById('pick').disabled = false;
+  input.value = '';
+  queue = [];
+};
+</script>
+</body>
+</html>
