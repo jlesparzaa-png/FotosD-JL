@@ -124,16 +124,17 @@ function upload(file, onProgress) {
   return toBase64(file).then(b64 => new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', WEB_APP_URL);
-    // text/plain evita el preflight CORS que Apps Script no soporta
     xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
     xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
     xhr.onload = () => {
       try {
         const r = JSON.parse(xhr.responseText);
-        r.status === 'success' ? resolve(r) : reject(new Error(r.message));
-      } catch (e) { reject(new Error('Respuesta inválida')); }
+        r.status === 'success' ? resolve(r) : reject(new Error('Script: ' + r.message));
+      } catch (e) {
+        reject(new Error('Respuesta no válida (HTTP ' + xhr.status + '). Revisa acceso "Cualquier persona" y URL /exec'));
+      }
     };
-    xhr.onerror = () => reject(new Error('Error de red'));
+    xhr.onerror = () => reject(new Error('Bloqueado por red/CORS. Revisa acceso "Cualquier persona" y URL /exec'));
     xhr.send(JSON.stringify({
       fileName: Date.now() + '_' + file.name,
       mimeType: file.type || 'application/octet-stream',
@@ -159,8 +160,9 @@ sendBtn.onclick = async () => {
       });
       tag.textContent = 'Listo'; tag.className = 'ok';
       done++;
-    } catch (e) {
+        } catch (e) {
       tag.textContent = 'Error'; tag.className = 'err';
+      statusEl.textContent = e.message;
       fails++;
     }
     fill.style.width = ((i + 1) / queue.length * 100) + '%';
@@ -168,7 +170,7 @@ sendBtn.onclick = async () => {
 
   statusEl.textContent = fails
     ? `Se subieron ${done}; fallaron ${fails}. Intenta de nuevo con esos.`
-    : 'Gracias, tus recuerdos se subieron correctamente.';
+     if (!fails) statusEl.textContent = 'Gracias, tus recuerdos se subieron correctamente.';
   document.getElementById('pick').disabled = false;
   input.value = '';
   queue = [];
