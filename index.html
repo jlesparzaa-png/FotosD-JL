@@ -3,19 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fotos Boda D&JL</title>
+<title>Fotos Boda D&amp;JL</title>
 <style>
   :root { --sand:#f6ecd9; --sea:#5fb3c4; --deep:#2b6f83; --text:#3b4a4f; }
   * { box-sizing:border-box; }
   body { margin:0; min-height:100vh; font-family:Georgia,"Times New Roman",serif; color:var(--text);
-    background:linear-gradient(180deg,#cfeaf0 0%,#eaf6f8 60%,var(--sand) 61%,#efdfc0 100%);
-    display:flex; flex-direction:column; align-items:center; }
-  .waves { width:100%; height:70px; display:block; margin-top:-1px; }
-  main { width:100%; max-width:440px; padding:24px 20px 40px; text-align:center; }
+    background:#cfeaf0; display:flex; flex-direction:column; align-items:center; }
+  body::before { content:''; position:fixed; inset:0; z-index:-1;
+    background:linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.35)), url('fondo.jpg') center/cover no-repeat; }
+  main { width:100%; max-width:440px; padding:28px 20px 40px; text-align:center; }
+  .head { background:rgba(255,255,255,.78); border-radius:18px; padding:16px 14px; margin-bottom:18px; box-shadow:0 6px 20px rgba(43,111,131,.15); }
   .names { font-size:2.2rem; margin:10px 0 4px; color:var(--deep); font-weight:normal; letter-spacing:1px; }
   .date { font-size:.95rem; letter-spacing:3px; text-transform:uppercase; opacity:.75; }
-  p.msg { line-height:1.5; margin:22px 0; }
-  .card { background:rgba(255,255,255,.75); border-radius:18px; padding:22px 18px; box-shadow:0 6px 20px rgba(43,111,131,.15); }
+  p.msg { line-height:1.5; margin:14px 0 0; }
+  .card { background:rgba(255,255,255,.82); border-radius:18px; padding:22px 18px; box-shadow:0 6px 20px rgba(43,111,131,.15); }
   input[type=file] { display:none; }
   .btn { display:inline-block; width:100%; padding:15px; border:none; border-radius:999px; font-family:inherit; font-size:1.05rem; cursor:pointer; color:#fff; background:var(--sea); }
   .btn.primary { background:var(--deep); margin-top:12px; }
@@ -31,16 +32,14 @@
 </style>
 </head>
 <body>
-<svg class="waves" viewBox="0 0 1200 70" preserveAspectRatio="none">
-  <path d="M0,35 C150,70 350,0 600,35 C850,70 1050,0 1200,35 L1200,70 L0,70 Z" fill="#f6ecd9"/>
-  <path d="M0,20 C200,55 400,-5 600,20 C800,45 1000,-5 1200,20 L1200,0 L0,0 Z" fill="#bfe3ea" opacity=".7"/>
-</svg>
 
 <main>
-  <div class="date">Recuerdos de nuestra Boda</div>
-  <h1 class="names">DEON &amp; JL</h1>
-  <p class="msg" style="font-weight: bold; color: #D4AF37;">01 de noviembre de 2026</p>
-  <p class="msg">Muchas gracias por acompañarnos en esta historia de amor. Te invitamos a compartir aquí tus fotos y videos cortos del día de nuestra celebración para que podamos revivirlo.</p>
+  <div class="head">
+    <div class="date">Recuerdos de nuestra Boda</div>
+    <h1 class="names">DEON &amp; JL</h1>
+    <p class="msg" style="font-weight: bold; color: #D4AF37;">01 de noviembre de 2026</p>
+    <p class="msg">Muchas gracias por acompañarnos en esta historia de amor. Te invitamos a compartir aquí tus fotos y videos cortos del día de nuestra celebración para que podamos revivirlo.</p>
+  </div>
 
   <div class="card">
     <input type="file" id="files" accept="image/*,video/*" multiple>
