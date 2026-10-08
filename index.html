@@ -103,8 +103,17 @@ async function upload(file, onProgress) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', WEB_APP_URL);
     xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
-    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+
+    // Avance simulado (sin listeners en xhr.upload para evitar el preflight CORS)
+    let p = 0;
+    const timer = setInterval(() => {
+      p += (0.9 - p) * 0.08;
+      onProgress(p);
+    }, 300);
+
     xhr.onload = () => {
+      clearInterval(timer);
+      onProgress(1);
       let r;
       try { r = JSON.parse(xhr.responseText); }
       catch (e) {
@@ -113,8 +122,10 @@ async function upload(file, onProgress) {
       }
       r.status === 'success' ? resolve(r) : reject(new Error('Error del script: ' + r.message));
     };
-    xhr.onerror = () => reject(new Error(
-      'Bloqueado por la red o CORS. Revisa que la implementación tenga acceso "Cualquier persona" y que la URL termine en /exec.'));
+    xhr.onerror = () => {
+      clearInterval(timer);
+      reject(new Error('No se pudo enviar el archivo. Revisa tu conexión o el acceso del Web App.'));
+    };
     xhr.send(JSON.stringify({
       fileName: Date.now() + '_' + file.name,
       mimeType: file.type || 'application/octet-stream',
